@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Price Plot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Asian Paints Stock Price</h1>
+        <div class="buttons">
+            <button onclick="updatePlot('1m')">This Month</button>
+            <button onclick="updatePlot('3m')">Past 3 Months</button>
+            <button onclick="updatePlot('1y')">Past Year</button>
+            <button onclick="updatePlot('5y')">Past 5 Years</button>
+            <button onclick="updatePlot('max')">Max</button>
+            <button onclick="updateData()">Update Data</button>
+            <button onclick="predictPrice()">Predict Next Day</button>
+        </div>
+        <div id="loader" class="loader" style="display: none;">Loading...</div>
+        <div id="predictionResult" class="prediction-result" style="display: none;"></div>
+        <div id="plot"></div>
+    </div>
+
+    <script>
+        let currentTimeRange = '1y';
+
+        function predictPrice() {
+            const loader = document.getElementById('loader');
+            const resultDiv = document.getElementById('predictionResult');
+            loader.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            fetch('/predict', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        resultDiv.innerText = `Predicted Next Day's Close: ${data.prediction}`;
+                        resultDiv.style.display = 'block';
+                    } else {
+                        resultDiv.innerText = `Error: ${data.message}`;
+                        resultDiv.style.display = 'block';
+                    }
+                    loader.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error fetching prediction:', error);
+                    resultDiv.innerText = 'Error fetching prediction.';
+                    resultDiv.style.display = 'block';
+                    loader.style.display = 'none';
+                });
+        }
+
+function updateData() {
+    const loader = document.getElementById('loader');
+    loader.style.display = 'block';
+}
+
+function updatePlot(timeRange) {
+    currentTimeRange = timeRange;
+    const plotDiv = document.getElementById('plot');
+    const loader = document.getElementById('loader');
+
+            loader.style.display = 'block';
+
+            fetch(`/plot?time_range=${timeRange}`)
+                .then(response => response.json())
+                .then(graphData => {
+                    Plotly.react('plot', graphData.data, graphData.layout);
+                    loader.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error fetching plot data:', error);
+                    loader.style.display = 'none';
+                });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePlot('1y');
+        });
+    </script>
+</body>
+</html>
