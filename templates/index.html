@@ -53,28 +53,43 @@
                 });
         }
 
-function updateData() {
-    const loader = document.getElementById('loader');
-    loader.style.display = 'block';
-}
-
-function updatePlot(timeRange) {
-    currentTimeRange = timeRange;
-    const plotDiv = document.getElementById('plot');
-    const loader = document.getElementById('loader');
-
+        function updateData() {
+            const loader = document.getElementById('loader');
             loader.style.display = 'block';
+            fetch('/update', { method: 'POST' })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('Data updated successfully');
+                                updatePlot(currentTimeRange);
+                            } else {
+                                console.error('Failed to update data');
+                                loader.style.display = 'none';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating data:', error);
+                            loader.style.display = 'none';
+                        });
+        }
 
-            fetch(`/plot?time_range=${timeRange}`)
-                .then(response => response.json())
-                .then(graphData => {
-                    Plotly.react('plot', graphData.data, graphData.layout);
-                    loader.style.display = 'none';
-                })
-                .catch(error => {
-                    console.error('Error fetching plot data:', error);
-                    loader.style.display = 'none';
-                });
+        function updatePlot(timeRange) {
+            currentTimeRange = timeRange;
+            const plotDiv = document.getElementById('plot');
+            const loader = document.getElementById('loader');
+
+                    loader.style.display = 'block';
+
+                    fetch(`/plot?time_range=${timeRange}`)
+                        .then(response => response.json())
+                        .then(graphData => {
+                            Plotly.react('plot', graphData.data, graphData.layout);
+                            loader.style.display = 'none';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching plot data:', error);
+                            loader.style.display = 'none';
+                        });
         }
         
         document.addEventListener('DOMContentLoaded', function() {
